@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MoodFlix - Admin</title>
+
+    <style>
+        body {
+            background: #141414;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .container {
+            width: 400px;
+            margin: auto;
+            background: #222;
+            padding: 30px;
+            border-radius: 12px;
+        }
+
+        h1 {
+            color: #e50914;
+        }
+
+        input, select {
+            width: 90%;
+            padding: 12px;
+            margin: 8px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        button {
+            width: 95%;
+            padding: 12px;
+            margin-top: 15px;
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #b20710;
+        }
+
+        #message {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🎬 MoodFlix Admin</h1>
+
+    <h2>Add Movie</h2>
+
+    <input type="text" id="title" placeholder="Movie Title">
+
+    <select id="mood">
+        <option value="">Select Mood</option>
+        <option value="Happy">Happy</option>
+        <option value="Sad">Sad</option>
+        <option value="Excited">Excited</option>
+        <option value="Relaxed">Relaxed</option>
+        <option value="Angry">Angry</option>
+        <option value="Romantic">Romantic</option>
+    </select>
+
+    <select id="genre">
+        <option value="">Select Genre</option>
+        <option value="Action">Action</option>
+        <option value="Comedy">Comedy</option>
+        <option value="Drama">Drama</option>
+        <option value="Romance">Romance</option>
+        <option value="Thriller">Thriller</option>
+        <option value="Sci-Fi">Sci-Fi</option>
+    </select>
+
+    <select id="language">
+        <option value="">Select Language</option>
+        <option value="Telugu">Telugu</option>
+        <option value="Hindi">Hindi</option>
+        <option value="English">English</option>
+        <option value="Tamil">Tamil</option>
+    </select>
+
+    <input type="number" id="duration" placeholder="Duration (minutes)">
+
+    <button onclick="addMovie()">➕ Add Movie</button>
+
+    <p id="message"></p>
+
+</div>
+
+<script>
+
+function addMovie() {
+
+    let title = document.getElementById("title").value;
+    let mood = document.getElementById("mood").value;
+    let genre = document.getElementById("genre").value;
+    let language = document.getElementById("language").value;
+    let duration = document.getElementById("duration").value;
+
+    let message = document.getElementById("message");
+
+    if (title === "" || mood === "" || genre === "" ||
+        language === "" || duration === "") {
+
+        message.innerHTML = "⚠️ Please fill all fields.";
+        return;
+    }
+
+    fetch("/api/admin/movies", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            title: title,
+            mood: mood,
+            genre: genre,
+            language: language,
+            duration: parseInt(duration)
+        })
+
+    })
+
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error("Failed to add movie");
+        }
+
+        return response.json();
+
+    })
+
+    .then(movie => {
+
+        message.innerHTML =
+            "✅ Movie added successfully: " + movie.title;
+
+        document.getElementById("title").value = "";
+        document.getElementById("mood").value = "";
+        document.getElementById("genre").value = "";
+        document.getElementById("language").value = "";
+        document.getElementById("duration").value = "";
+
+    })
+
+    .catch(error => {
+
+        message.innerHTML = "❌ " + error.message;
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>

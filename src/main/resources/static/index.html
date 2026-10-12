@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoodFlix — Discover Your Next Movie</title>
+  <style>
+    :root {
+      --bg: #0b0d12; --panel: #141821; --panel2: #1b2130;
+      --text: #f4f6fb; --muted: #aab2c5; --accent: #e50914;
+      --line: #2b3242; --green: #38d996;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif; color: var(--text); background: radial-gradient(circle at top right, #20253a 0, var(--bg) 40%); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; border: 0; border-radius: 9px; padding: 10px 14px; color: white; background: var(--accent); font-weight: 650; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .secondary { background: #293145; }
+    .success { background: #17865b; }
+    header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px clamp(16px, 4vw, 48px); background: rgba(10,12,18,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(14px); }
+    .brand { font-size: 1.6rem; font-weight: 900; letter-spacing: -.8px; color: var(--accent); }
+    .brand span { color: white; }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    main { width: min(1400px, 94%); margin: 28px auto 60px; }
+    .hero { padding: clamp(22px, 5vw, 54px); border: 1px solid var(--line); border-radius: 22px; background: linear-gradient(120deg, rgba(229,9,20,.19), rgba(30,38,60,.8)); }
+    .hero h1 { margin: 0 0 10px; font-size: clamp(2rem, 5vw, 3.7rem); }
+    .hero p { color: var(--muted); line-height: 1.6; max-width: 720px; }
+    .section { margin-top: 28px; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: rgba(20,24,33,.92); }
+    h2 { margin: 0 0 16px; font-size: 1.35rem; }
+    .moods, .filters, .search-row, .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+    .mood-btn { background: var(--panel2); border: 1px solid var(--line); }
+    .mood-btn.active { background: #7f1822; border-color: #ff5963; }
+    .field { display: flex; flex-direction: column; gap: 7px; min-width: 160px; flex: 1; }
+    label { color: var(--muted); font-size: .9rem; }
+    input, select, textarea { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; background: #0e121a; color: var(--text); outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: #e50914; }
+    .search-row { margin-top: 16px; }
+    .search-row .field { min-width: 220px; }
+    .status { color: var(--muted); min-height: 24px; margin: 14px 0 0; }
+    .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 18px; margin-top: 20px; }
+    .movie-card { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #10141d; display: flex; flex-direction: column; min-width: 0; }
+    .poster-wrap { aspect-ratio: 2/3; background: #202636; }
+    .poster { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .movie-info { padding: 13px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
+    .movie-info h3 { margin: 0; font-size: 1.02rem; line-height: 1.35; }
+    .meta { color: var(--muted); font-size: .82rem; }
+    .overview { color: #d1d6e2; font-size: .87rem; line-height: 1.5; }
+    .movie-info button { margin-top: auto; }
+    .empty { padding: 26px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; grid-column: 1/-1; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    th, td { text-align: left; padding: 11px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-size: .88rem; }
+    td button { margin: 2px; }
+    .small { color: var(--muted); font-size: .85rem; line-height: 1.5; }
+    footer { text-align: center; color: var(--muted); padding: 24px; }
+    @media (max-width: 600px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .section { padding: 15px; }
+      .movie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .movie-info { padding: 10px; }
+      .movie-info h3 { font-size: .92rem; }
+      .movie-info button { padding: 9px 8px; font-size: .8rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">MOOD<span>FLIX</span></div>
+    <div class="header-actions">
+      <button class="secondary" onclick="browseWorldwide()">🌍 Worldwide Movies</button>
+      <button class="secondary" onclick="location.href='/watchlist.html'">❤️ Watchlist</button>
+      <button onclick="goToLogin()">🔐 Login</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Find a movie for your mood.</h1>
+      <p>Explore movies from around the world, search titles, filter by genre and language, or get recommendations that match how you feel.</p>
+      <div class="actions">
+        <button onclick="browseWorldwide()">Explore Worldwide Movies</button>
+        <button class="secondary" onclick="document.getElementById('databaseSection').scrollIntoView({behavior:'smooth'})">Open My Movie Database</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>🎭 Choose Your Mood</h2>
+      <div class="moods" id="moodButtons">
+        <button class="mood-btn" data-mood="happy" onclick="selectMood('happy', this)">😊 Happy</button>
+        <button class="mood-btn" data-mood="sad" onclick="selectMood('sad', this)">😢 Sad</button>
+        <button class="mood-btn" data-mood="excited" onclick="selectMood('excited', this)">⚡ Excited</button>
+        <button class="mood-btn" data-mood="relaxed" onclick="selectMood('relaxed', this)">🌿 Relaxed</button>
+        <button class="mood-btn" data-mood="angry" onclick="selectMood('angry', this)">😤 Angry</button>
+        <button class="mood-btn" data-mood="romantic" onclick="selectMood('romantic', this)">❤️ Romantic</button>
+      </div>
+
+      <div class="filters" style="margin-top:18px">
+        <div class="field">
+          <label for="genreFilter">Genre</label>
+          <select id="genreFilter">
+            <option value="">All genres</option>
+            <option>Action</option><option>Adventure</option><option>Animation</option><option>Comedy</option>
+            <option>Crime</option><option>Documentary</option><option>Drama</option><option>Family</option>
+            <option>Fantasy</option><option>History</option><option>Horror</option><option>Music</option>
+            <option>Mystery</option><option>Romance</option><option>Sci-Fi</option><option>Thriller</option>
+            <option>War</option><option>Western</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="languageFilter">Language</label>
+          <select id="languageFilter">
+            <option value="">Worldwide — all languages</option>
+            <option value="Telugu">Telugu</option><option value="Hindi">Hindi</option><option value="English">English</option>
+            <option value="Tamil">Tamil</option><option value="Malayalam">Malayalam</option><option value="Kannada">Kannada</option>
+            <option value="Japanese">Japanese</option><option value="Korean">Korean</option><option value="Chinese">Chinese</option>
+            <option value="Spanish">Spanish</option><option value="French">French</option><option value="German">German</option>
+            <option value="Italian">Italian</option><option value="Portuguese">Portuguese</option><option value="Arabic">Arabic</option>
+            <option value="Russian">Russian</option><option value="Thai">Thai</option><option value="Turkish">Turkish</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="timeFilter">Runtime</label>
+          <select id="timeFilter">
+            <option value="">Any runtime</option>
+            <option value="short">Short (under 90 min)</option>
+            <option value="medium">Medium (90–120 min)</option>
+            <option value="long">Long (over 120 min)</option>
+          </select>
+        </div>
+        <button onclick="recommendMovie()">Recommend for My Mood</button>
+        <button class="secondary" onclick="browseWorldwide()">Browse All</button>
+      </div>
+
+      <div class="search-row">
+        <div class="field">
+          <label for="searchInput">Search movie title</label>
+          <input id="searchInput" type="search" placeholder="e.g. Interstellar, RRR, Inception" onkeydown="if(event.key==='Enter') searchMovies()">
+        </div>
+        <button onclick="searchMovies()">🔎 Search</button>
+        <button class="secondary" onclick="clearFilters()">Clear Filters</button>
+      </div>
+      <p id="status" class="status" role="status">Loading worldwide movies…</p>
+      <div id="result" class="movie-grid"></div>
+      <div class="actions" style="justify-content:center;margin-top:20px">
+        <button id="loadMoreBtn" class="secondary" onclick="loadMoreMovies()" hidden>Load More Movies</button>
+      </div>
+    </section>
+
+    <section class="section" id="databaseSection">
+      <h2>🗃️ My Movie Database (CRUD)</h2>
+      <p class="small">Add and manage your own movie records saved in your application database.</p>
+      <form id="movieForm">
+        <input type="hidden" id="movieId">
+        <div class="filters">
+          <div class="field"><label for="movieTitle">Movie title *</label><input id="movieTitle" required maxlength="200" placeholder="Movie title"></div>
+          <div class="field"><label for="movieMood">Mood</label>
+            <select id="movieMood"><option value="happy">Happy</option><option value="sad">Sad</option><option value="excited">Excited</option><option value="relaxed">Relaxed</option><option value="angry">Angry</option><option value="romantic">Romantic</option></select>
+          </div>
+          <div class="field"><label for="movieGenre">Genre</label><input id="movieGenre" placeholder="Action / Drama"></div>
+          <div class="field"><label for="movieLanguage">Language</label><input id="movieLanguage" placeholder="Telugu / English"></div>
+          <div class="field"><label for="movieDuration">Duration (minutes)</label><input id="movieDuration" type="number" min="1" max="1000" placeholder="120"></div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button type="submit" id="saveMovieBtn">Save Movie</button>
+          <button type="button" class="secondary" onclick="resetMovieForm()">Clear Form</button>
+        </div>
+      </form>
+      <p id="crudMessage" class="status" role="status"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Title</th><th>Mood</th><th>Genre</th><th>Language</th><th>Duration</th><th>Actions</th></tr></thead>
+          <tbody id="databaseMovieRows"><tr><td colspan="7">Loading database movies…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer>MOODFLIX · Discover something worth watching.</footer>
+
+  <script>
+    const API = '/api/tmdb';
+    const PLACEHOLDER_POSTER = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600"><rect width="100%" height="100%" fill="#202636"/><text x="50%" y="50%" fill="#aab2c5" font-size="26" text-anchor="middle">No Poster</text></svg>'
+    );
+    let selectedMood = '';
+    let currentMode = 'discover';
+    let currentPage = 1;
+    let totalPages = 1;
+    let isLoading = false;
+    let currentRequest = {};
+    let databaseMovies = [];
+
+    function goToLogin() { window.location.href = '/login.html'; }
+
+    function selectMood(mood, button) {
+      selectedMood = mood;
+      document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.toggle('active', btn === button));
+      recommendMovie();
+    }
+
+    function filters() {
+      return {
+        genre: document.getElementById('genreFilter').value.trim(),
+        language: document.getElementById('languageFilter').value.trim(),
+        time: document.getElementById('timeFilter').value.trim()
+      };
+    }
+
+    function setStatus(message) {
+      document.getElementById('status').textContent = message;
+    }
+
+    function buildQuery(params) {
+      const query = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && String(value).trim() !== '') query.set(key, value);
+      });
+      return query.toString();
+    }
+
+    async function fetchMoviePage(mode, page, append) {
+      if (isLoading) return;
+      isLoading = true;
+      const loadButton = document.getElementById('loadMoreBtn');
+      loadButton.disabled = true;
+      if (!append) {
+        document.getElementById('result').replaceChildren();
+        loadButton.hidden = true;
+        setStatus('Loading movies…');
+      } else {
+        setStatus('Loading more movies…');
+      }
+
+      const params = {...currentRequest, page};
+      const url = `${API}/${mode}?${buildQuery(params)}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        const data = await response.json();
+        const movies = Array.isArray(data.results) ? data.results : [];
+        currentPage = Number(data.page || page);
+        totalPages = Number(data.total_pages || 1);
+
+        renderMovies(movies, append);
+        const shown = document.querySelectorAll('#result .movie-card').length;
+        if (movies.length === 0 && !append) {
+          setStatus('No movies found. Try changing the filters or search term.');
+        } else {
+          setStatus(`Showing ${shown} movies · Page ${currentPage} of ${totalPages}`);
+        }
+        loadButton.hidden = currentPage >= totalPages || movies.length === 0;
+      } catch (error) {
+        setStatus(`Could not load movies: ${error.message}. Check that MoodFlix and the TMDB API configuration are running.`);
+        if (!append) document.getElementById('result').replaceChildren();
+      } finally {
+        isLoading = false;
+        loadButton.disabled = false;
+      }
+    }
+
+    function browseWorldwide() {
+      selectedMood = '';
+      document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+      currentMode = 'discover';
+      const f = filters();
+      currentRequest = {genre: f.genre, language: f.language, time: f.time};
+      fetchMoviePage(currentMode, 1, false);
+    }
+
+    function recommendMovie() {
+      if (!selectedMood) {
+        setStatus('Choose a mood first, or click Browse All to explore worldwide movies.');
+        return;
+      }
+      const f = filters();
+      currentMode = 'recommend';
+      currentRequest = {mood: selectedMood, genre: f.genre, language: f.language, time: f.time};
+      fetchMoviePage(currentMode, 1, false);
+    }
+
+    function searchMovies() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) {
+        setStatus('Enter a movie title to search.');
+        document.getElementById('searchInput').focus();
+        return;
+      }
+      currentMode = 'search';
+      currentRequest = {query, language: filters().language};
+      fetchMoviePage(currentMode, 1, false);
+    }
+
+    function clearFilters() {
+      document.getElementById('genreFilter').value = '';
+      document.getElementById('languageFilter').value = '';
+      document.getElementById('timeFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      selectedMood = '';
+      document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+      browseWorldwide();
+    }
+
+    function loadMoreMovies() {
+      if (!isLoading && currentPage < totalPages) fetchMoviePage(currentMode, currentPage + 1, true);
+    }
+
+    function renderMovies(movies, append) {
+      const container = document.getElementById('result');
+      if (!append) container.replaceChildren();
+      if (!movies.length && !append) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'No movies found.';
+        container.appendChild(empty);
+        return;
+      }
+      movies.forEach(movie => {
+        const card = document.createElement('article');
+        card.className = 'movie-card';
+
+        const posterWrap = document.createElement('div');
+        posterWrap.className = 'poster-wrap';
+        const poster = document.createElement('img');
+        poster.className = 'poster';
+        poster.loading = 'lazy';
+        poster.alt = movie.title ? `${movie.title} poster` : 'Movie poster';
+        poster.src = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : PLACEHOLDER_POSTER;
+        poster.onerror = () => { poster.onerror = null; poster.src = PLACEHOLDER_POSTER; };
+        posterWrap.appendChild(poster);
+
+        const info = document.createElement('div');
+        info.className = 'movie-info';
+        const title = document.createElement('h3');
+        title.textContent = movie.title || movie.name || 'Untitled';
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const year = movie.release_date ? movie.release_date.slice(0, 4) : 'Release date unknown';
+        const rating = Number.isFinite(Number(movie.vote_average)) ? Number(movie.vote_average).toFixed(1) : 'N/A';
+        const runtime = Number(movie.runtime);
+        const runtimeText = Number.isFinite(runtime) && runtime > 0 ? ` · ${runtime} min` : '';
+        meta.textContent = `⭐ ${rating} · ${year} · ${(movie.original_language || '—').toUpperCase()}${runtimeText}`;
+        const overview = document.createElement('p');
+        overview.className = 'overview';
+        const description = movie.overview || 'No description available.';
+        overview.textContent = description.length > 180 ? `${description.slice(0, 177)}…` : description;
+        const addButton = document.createElement('button');
+        addButton.className = 'success';
+        addButton.textContent = '＋ Add to Watchlist';
+        addButton.addEventListener('click', () => addToWatchlist(movie));
+        info.append(title, meta, overview, addButton);
+        card.append(posterWrap, info);
+        container.appendChild(card);
+      });
+    }
+
+    async function addToWatchlist(movie) {
+      const button = [...document.querySelectorAll('#result button')].find(b => b.textContent.includes('Add to Watchlist') && b.closest('.movie-card')?.querySelector('h3')?.textContent === (movie.title || movie.name || 'Untitled'));
+      if (button) { button.disabled = true; button.textContent = 'Adding…'; }
+      try {
+        const response = await fetch('/api/watchlist/add', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            userId: 6,
+            movieId: movie.id,
+            movieTitle: movie.title || movie.name || 'Untitled',
+            posterPath: movie.poster_path || '',
+            rating: Number(movie.vote_average || 0)
+          })
+        });
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        if (button) button.textContent = '✓ Added';
+      } catch (error) {
+        if (button) { button.disabled = false; button.textContent = '＋ Add to Watchlist'; }
+        alert('Could not add this movie to your watchlist. Please check login and backend status.');
+      }
+    }
+
+    // Database CRUD: expects the existing /api/movies endpoints.
+    async function loadDatabaseMovies() {
+      const tbody = document.getElementById('databaseMovieRows');
+      try {
+        const response = await fetch('/api/movies');
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        const data = await response.json();
+        databaseMovies = Array.isArray(data) ? data : (Array.isArray(data.content) ? data.content : []);
+        renderDatabaseMovies();
+        document.getElementById('crudMessage').textContent = '';
+      } catch (error) {
+        tbody.replaceChildren();
+        const row = tbody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 7;
+        cell.textContent = 'Could not load database movies. Check the backend/database.';
+        document.getElementById('crudMessage').textContent = error.message;
+      }
+    }
+
+    function renderDatabaseMovies() {
+      const tbody = document.getElementById('databaseMovieRows');
+      tbody.replaceChildren();
+      if (!databaseMovies.length) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 7;
+        cell.textContent = 'No saved movies yet. Add one using the form above.';
+        return;
+      }
+      databaseMovies.forEach(movie => {
+        const row = tbody.insertRow();
+        const values = [
+          movie.id ?? movie.movieId ?? '',
+          movie.title ?? movie.movieTitle ?? '',
+          movie.mood ?? '',
+          movie.genre ?? '',
+          movie.language ?? '',
+          movie.duration ?? movie.runtime ?? ''
+        ];
+        values.forEach(value => { row.insertCell().textContent = value; });
+        const actionsCell = row.insertCell();
+        const edit = document.createElement('button');
+        edit.className = 'secondary';
+        edit.textContent = 'Edit';
+        edit.addEventListener('click', () => editDatabaseMovie(movie.id ?? movie.movieId));
+        const remove = document.createElement('button');
+        remove.textContent = 'Delete';
+        remove.addEventListener('click', () => deleteDatabaseMovie(movie.id ?? movie.movieId));
+        actionsCell.append(edit, remove);
+      });
+    }
+
+    document.getElementById('movieForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const id = document.getElementById('movieId').value;
+      const movie = {
+        title: document.getElementById('movieTitle').value.trim(),
+        mood: document.getElementById('movieMood').value,
+        genre: document.getElementById('movieGenre').value.trim(),
+        language: document.getElementById('movieLanguage').value.trim(),
+        duration: document.getElementById('movieDuration').value ? Number(document.getElementById('movieDuration').value) : null
+      };
+      const message = document.getElementById('crudMessage');
+      try {
+        const response = await fetch(id ? `/api/movies/${encodeURIComponent(id)}` : '/api/movies', {
+          method: id ? 'PUT' : 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(movie)
+        });
+        if (!response.ok) throw new Error(`Save failed (${response.status})`);
+        message.textContent = id ? 'Movie updated successfully.' : 'Movie saved successfully.';
+        resetMovieForm();
+        await loadDatabaseMovies();
+      } catch (error) {
+        message.textContent = `Could not save movie: ${error.message}`;
+      }
+    });
+
+    function editDatabaseMovie(id) {
+      const movie = databaseMovies.find(item => String(item.id ?? item.movieId) === String(id));
+      if (!movie) return;
+      document.getElementById('movieId').value = movie.id ?? movie.movieId ?? '';
+      document.getElementById('movieTitle').value = movie.title ?? movie.movieTitle ?? '';
+      document.getElementById('movieMood').value = movie.mood ?? 'happy';
+      document.getElementById('movieGenre').value = movie.genre ?? '';
+      document.getElementById('movieLanguage').value = movie.language ?? '';
+      document.getElementById('movieDuration').value = movie.duration ?? movie.runtime ?? '';
+      document.getElementById('saveMovieBtn').textContent = 'Update Movie';
+      document.getElementById('movieForm').scrollIntoView({behavior:'smooth', block:'center'});
+    }
+
+    async function deleteDatabaseMovie(id) {
+      if (!confirm('Delete this movie from your database?')) return;
+      const message = document.getElementById('crudMessage');
+      try {
+        const response = await fetch(`/api/movies/${encodeURIComponent(id)}`, {method:'DELETE'});
+        if (!response.ok) throw new Error(`Delete failed (${response.status})`);
+        message.textContent = 'Movie deleted successfully.';
+        await loadDatabaseMovies();
+      } catch (error) {
+        message.textContent = `Could not delete movie: ${error.message}`;
+      }
+    }
+
+    function resetMovieForm() {
+      document.getElementById('movieForm').reset();
+      document.getElementById('movieId').value = '';
+      document.getElementById('saveMovieBtn').textContent = 'Save Movie';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      browseWorldwide();
+      loadDatabaseMovies();
+    });
+  </script>
+</body>
+</html>

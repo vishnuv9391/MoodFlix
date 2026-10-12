@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MoodFlix - Register</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #141414;
+            color: white;
+        }
+
+        .container {
+            width: 350px;
+            margin: 100px auto;
+            background: #222;
+            padding: 35px;
+            border-radius: 15px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #e50914;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 6px;
+            background: #333;
+            color: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 6px;
+            background: #e50914;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #b20710;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        a {
+            color: #e50914;
+            text-decoration: none;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🎬 MoodFlix</h1>
+
+        <h2>Register</h2>
+
+        <input
+            type="text"
+            id="name"
+            placeholder="Enter your name">
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Enter your email">
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter your password">
+
+        <button onclick="registerUser()">
+            Register
+        </button>
+
+        <div id="message"></div>
+
+    </div>
+
+
+    <script>
+
+      function registerUser() {
+
+    let name = document.getElementById("name").value;
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+
+    let message = document.getElementById("message");
+
+    if (name === "" || email === "" || password === "") {
+
+        message.innerHTML =
+            "⚠️ Please fill all fields.";
+
+        return;
+    }
+
+    fetch("/api/users/register", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            name: name,
+            email: email,
+            password: password
+        })
+
+    })
+
+    .then(response => {
+
+        return response.text().then(data => {
+
+            if (!response.ok) {
+                throw new Error(data);
+            }
+
+            return data;
+        });
+
+    })
+
+    .then(data => {
+
+        let user = JSON.parse(data);
+
+        message.innerHTML =
+            "✅ Registration successful! Welcome " + user.name;
+
+    })
+
+    .catch(error => {
+
+        message.innerHTML =
+            "❌ " + error.message;
+
+    });
+}
+
+    </script>
+
+</body>
+
+</html>
