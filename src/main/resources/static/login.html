@@ -1,14 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <meta name="google-site-verification" content="P0mui8CTztvdLHmFaZREp6RlZFuZchaYeMkmfI9qWaE" />
+
     <title>MoodFlix - Login</title>
 
     <style>
-
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -64,100 +65,72 @@
             text-align: center;
             margin-top: 20px;
         }
-
     </style>
-
 </head>
 
 <body>
-
     <div class="container">
-
         <h1>🎬 MoodFlix</h1>
-
         <h2>Login</h2>
 
         <input
             type="email"
             id="email"
-            placeholder="Enter your email">
+            placeholder="Enter your email"
+        >
 
         <input
             type="password"
             id="password"
-            placeholder="Enter your password">
+            placeholder="Enter your password"
+        >
 
-        <button onclick="loginUser()">
-            Login
-        </button>
+        <button onclick="loginUser()">Login</button>
 
         <div id="message"></div>
-
     </div>
 
-
     <script>
-function loginUser() {
+        function loginUser() {
+            let email = document.getElementById("email").value;
+            let password = document.getElementById("password").value;
+            let message = document.getElementById("message");
 
-    let email = document.getElementById("email").value;
-    let password = document.getElementById("password").value;
-    let message = document.getElementById("message");
-
-    if (email === "" || password === "") {
-
-        message.innerHTML =
-            "⚠️ Please enter email and password.";
-
-        return;
-    }
-
-    fetch("/api/users/login", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            email: email,
-            password: password
-        })
-
-    })
-
-    .then(response => {
-
-        return response.text().then(data => {
-
-            if (!response.ok) {
-                throw new Error(data);
+            if (email === "" || password === "") {
+                message.innerHTML =
+                    "⚠️ Please enter email and password.";
+                return;
             }
 
-            return data;
-        });
+            fetch("/api/users/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            })
+            .then(response => {
+                return response.text().then(data => {
+                    if (!response.ok) {
+                        throw new Error(data);
+                    }
+                    return data;
+                });
+            })
+            .then(data => {
+                message.innerHTML = "✅ Login successful!";
 
-    })
-
-    .then(data => {
-
-        message.innerHTML = "✅ Login successful!";
-
-        setTimeout(() => {
-            window.location.href = "/index.html";
-        }, 1000);
-
-    })
-
-    .catch(error => {
-
-        message.innerHTML =
-            "❌ " + error.message;
-
-    });
-}
+                setTimeout(() => {
+                    window.location.href = "/index.html";
+                }, 1000);
+            })
+            .catch(error => {
+                message.innerHTML = "❌ " + error.message;
+            });
+        }
     </script>
-
 </body>
-
 </html>
